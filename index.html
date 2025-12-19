@@ -10,101 +10,128 @@
     <style>
         :root {
             --apple-blue: #007AFF;
-            --apple-gray: #8E8E93;
-            --apple-bg: #F5F5F7;
-            --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-color: #F5F5F7;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #1D1D1F;
+            --text-secondary: #86868B;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --item-bg: #FFFFFF;
         }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.8);
+            --text-main: #FFFFFF;
+            --text-secondary: #A1A1A6;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --item-bg: rgba(44, 44, 46, 0.8);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg-color: #000000;
+                --card-bg: rgba(28, 28, 30, 0.8);
+                --text-main: #FFFFFF;
+                --text-secondary: #A1A1A6;
+                --border-color: rgba(255, 255, 255, 0.15);
+                --input-bg: rgba(255, 255, 255, 0.1);
+                --item-bg: rgba(44, 44, 46, 0.8);
+            }
+        }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            background: fixed linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #1D1D1F;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             -webkit-font-smoothing: antialiased;
-            position: relative;
-            overflow-x: hidden;
-        }
-        /* Decorative Background Blobs */
-        body::before {
-            content: "";
-            position: fixed;
-            top: -10%;
-            right: -10%;
-            width: 40%;
-            height: 40%;
-            background: radial-gradient(circle, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0) 70%);
-            z-index: -1;
-            filter: blur(60px);
-        }
-        body::after {
-            content: "";
-            position: fixed;
-            bottom: -5%;
-            left: -5%;
-            width: 35%;
-            height: 35%;
-            background: radial-gradient(circle, rgba(118, 75, 162, 0.08) 0%, rgba(118, 75, 162, 0) 70%);
-            z-index: -1;
-            filter: blur(50px);
+            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-color);
             border-radius: 24px;
-            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.06);
+            transition: all 0.3s ease;
         }
+
         .apple-input {
-            background: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(0, 0, 0, 0.06);
+            background: var(--input-bg);
+            border: 1px solid transparent;
             border-radius: 14px;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            color: var(--text-main);
+            transition: all 0.3s ease;
         }
+
         .apple-input:focus {
-            background: #fff;
+            background: var(--card-bg);
             border-color: var(--apple-blue);
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
-            transform: translateY(-1px);
         }
+
         .service-tag {
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            background: rgba(255, 255, 255, 0.4);
+            background: var(--item-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: all 0.2s ease;
         }
-        .service-tag:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: scale(1.01);
-        }
+
         .service-tag.active {
             background: var(--apple-blue);
-            color: white;
-            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25);
+            color: white !important;
             border-color: transparent;
         }
-        .btn-primary {
+
+        .theme-switch {
+            background: var(--input-bg);
+            border-radius: 20px;
+            padding: 4px;
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .theme-btn {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .theme-btn.active {
             background: var(--apple-blue);
             color: white;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            box-shadow: 0 4px 14px rgba(0, 118, 255, 0.3);
         }
-        .btn-primary:hover {
-            background: #0062CC;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 118, 255, 0.4);
-        }
+
         .summary-card {
             background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
         }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="min-h-screen py-12">
     <div id="app" class="container mx-auto px-6 max-w-5xl">
         <!-- Header -->
-        <header class="mb-12 text-center">
-            <h1 class="text-4xl font-semibold tracking-tight text-slate-900 mb-3">造价咨询收费计算器</h1>
-            <p class="text-lg text-slate-500 font-medium">京标价协 (2022) 71号标准</p>
+        <header class="mb-12 flex flex-col items-center">
+            <div class="theme-switch mb-8">
+                <button @click="setTheme('light')" :class="['theme-btn', theme === 'light' ? 'active' : '']">
+                    <i class="fas fa-sun mr-1"></i> 明亮
+                </button>
+                <button @click="setTheme('dark')" :class="['theme-btn', theme === 'dark' ? 'active' : '']">
+                    <i class="fas fa-moon mr-1"></i> 暗黑
+                </button>
+                <button @click="setTheme('system')" :class="['theme-btn', theme === 'system' ? 'active' : '']">
+                    <i class="fas fa-desktop mr-1"></i> 跟随系统
+                </button>
+            </div>
+            <h1 class="text-4xl font-semibold tracking-tight mb-3">造价咨询收费计算器</h1>
+            <p class="text-lg opacity-60 font-medium">京标价协 (2022) 71号标准</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -118,26 +145,26 @@
                     <div class="space-y-6">
                         <!-- Construction Cost -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">工程造价</label>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">工程造价</label>
                             <div class="relative">
                                 <input type="number" v-model.number="costAmount" 
                                     class="apple-input w-full pl-5 pr-16 py-4 text-xl font-semibold outline-none"
                                     placeholder="0.00">
-                                <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-medium">万元</span>
+                                <span class="absolute right-5 top-1/2 -translate-y-1/2 opacity-40 font-medium">万元</span>
                             </div>
                         </div>
 
                         <!-- Services Selection -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">咨询项目</label>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-3 ml-1">咨询项目</label>
                             <div class="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
                                 <div v-for="item in serviceOptions" :key="item.id" 
                                     @click="toggleService(item.id)"
                                     :class="['service-tag flex items-center justify-between p-4 rounded-2xl border cursor-pointer', 
-                                            selectedServices.includes(item.id) ? 'active border-transparent' : 'bg-white border-slate-100 hover:border-slate-300']">
+                                            selectedServices.includes(item.id) ? 'active border-transparent' : 'hover:border-blue-500/50']">
                                     <span class="text-sm font-medium">{{ item.name }}</span>
                                     <i v-if="selectedServices.includes(item.id)" class="fas fa-check-circle text-white"></i>
-                                    <i v-else class="far fa-circle text-slate-200"></i>
+                                    <i v-else class="far fa-circle opacity-20"></i>
                                 </div>
                             </div>
                         </div>
@@ -153,12 +180,12 @@
                     <div class="space-y-6">
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">调整系数</label>
+                                <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">调整系数</label>
                                 <input type="number" v-model.number="adjustmentRatio" step="0.1"
                                     class="apple-input w-full px-4 py-3 font-medium outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">折扣率 (%)</label>
+                                <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">折扣率 (%)</label>
                                 <input type="number" v-model.number="discount" 
                                     class="apple-input w-full px-4 py-3 font-medium outline-none"
                                     placeholder="100">
@@ -166,22 +193,22 @@
                         </div>
 
                         <div class="space-y-3">
-                            <label class="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100 cursor-pointer group">
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-transparent bg-black/5 dark:bg-white/5 cursor-pointer group">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                                         <i class="fas fa-shield-alt"></i>
                                     </div>
-                                    <span class="text-sm font-medium text-slate-700">审核类业务 (0.9)</span>
+                                    <span class="text-sm font-medium opacity-80">审核类业务 (0.9)</span>
                                 </div>
                                 <input type="checkbox" v-model="isAudit" class="w-5 h-5 accent-blue-500">
                             </label>
 
-                            <label class="flex items-center justify-between p-4 bg-white/50 rounded-2xl border border-slate-100 cursor-pointer group">
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-transparent bg-black/5 dark:bg-white/5 cursor-pointer group">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
                                         <i class="fas fa-star"></i>
                                     </div>
-                                    <span class="text-sm font-medium text-slate-700">专项工程 (1.2)</span>
+                                    <span class="text-sm font-medium opacity-80">专项工程 (1.2)</span>
                                 </div>
                                 <input type="checkbox" v-model="isSpecial" class="w-5 h-5 accent-blue-500">
                             </label>
@@ -189,12 +216,12 @@
 
                         <!-- Benefit Fee -->
                         <div v-if="selectedServices.some(id => rateTable[id].hasBenefit)" 
-                            class="p-6 bg-orange-50/50 rounded-2xl border border-orange-100 space-y-4">
+                            class="p-6 bg-orange-500/10 dark:bg-orange-500/20 rounded-2xl border border-orange-500/20 space-y-4">
                             <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-bold text-orange-800">结算审核效益收费</h3>
-                                <div class="flex items-center gap-2 px-3 py-1 bg-white rounded-lg border border-orange-200">
+                                <h3 class="text-sm font-bold text-orange-500">结算审核效益收费</h3>
+                                <div class="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-lg border border-orange-500/30">
                                     <span class="text-xs font-bold text-orange-400">费率</span>
-                                    <input type="number" v-model.number="benefitRate" class="w-8 text-sm font-bold text-orange-700 outline-none bg-transparent text-center">
+                                    <input type="number" v-model.number="benefitRate" class="w-8 text-sm font-bold text-orange-500 outline-none bg-transparent text-center">
                                     <span class="text-xs font-bold text-orange-400">%</span>
                                 </div>
                             </div>
@@ -202,19 +229,19 @@
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold text-orange-400 uppercase ml-1">核减额 (万)</label>
                                     <input type="number" v-model.number="reducedAmount" 
-                                        class="w-full px-4 py-3 bg-white border border-orange-100 rounded-xl outline-none text-sm font-semibold text-orange-900 focus:border-orange-500 transition-colors"
+                                        class="w-full px-4 py-3 bg-white/10 border border-orange-500/20 rounded-xl outline-none text-sm font-semibold text-orange-500 focus:border-orange-500 transition-colors"
                                         placeholder="0.00">
                                 </div>
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-bold text-orange-400 uppercase ml-1">核增额 (万)</label>
                                     <input type="number" v-model.number="addedAmount" 
-                                        class="w-full px-4 py-3 bg-white border border-orange-100 rounded-xl outline-none text-sm font-semibold text-orange-900 focus:border-orange-500 transition-colors"
+                                        class="w-full px-4 py-3 bg-white/10 border border-orange-500/20 rounded-xl outline-none text-sm font-semibold text-orange-500 focus:border-orange-500 transition-colors"
                                         placeholder="0.00">
                                 </div>
                             </div>
                         </div>
 
-                        <button @click="resetAll" class="w-full py-4 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors">
+                        <button @click="resetAll" class="w-full py-4 text-sm font-medium opacity-40 hover:opacity-100 transition-opacity">
                             <i class="fas fa-redo-alt mr-2 text-xs"></i> 重置所有参数
                         </button>
                     </div>
@@ -225,12 +252,12 @@
             <div class="lg:col-span-7">
                 <section class="glass-card overflow-hidden flex flex-col h-full">
                     <!-- Results Header -->
-                    <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-white/50">
+                    <div class="p-8 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
                         <div>
-                            <h2 class="text-2xl font-semibold text-slate-900">收费计算报告</h2>
-                            <p class="text-sm text-slate-400 mt-1">根据最新计价标准实时生成</p>
+                            <h2 class="text-2xl font-semibold">收费计算报告</h2>
+                            <p class="text-sm opacity-40 mt-1">根据最新计价标准实时生成</p>
                         </div>
-                        <button @click="copyReport" class="btn-primary px-6 py-3 rounded-2xl flex items-center gap-2 font-medium text-sm shadow-lg shadow-blue-500/20">
+                        <button @click="copyReport" class="btn-primary px-6 py-3 rounded-2xl flex items-center gap-2 font-medium text-sm shadow-lg">
                             <i class="far fa-copy"></i>
                             {{ copyBtnText }}
                         </button>
@@ -238,8 +265,8 @@
 
                     <!-- Results Content -->
                     <div class="p-8 flex-grow">
-                        <div v-if="selectedServices.length === 0" class="flex flex-col items-center justify-center py-20 text-slate-300">
-                            <div class="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-6">
+                        <div v-if="selectedServices.length === 0" class="flex flex-col items-center justify-center py-20 opacity-20">
+                            <div class="w-20 h-20 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mb-6">
                                 <i class="fas fa-receipt text-3xl"></i>
                             </div>
                             <p class="text-lg font-medium">请选择咨询项目以开始计算</p>
@@ -251,17 +278,17 @@
                                 <div v-for="res in calculationResults" :key="res.id" class="group">
                                     <div class="flex items-center gap-3 mb-4">
                                         <div class="w-1.5 h-6 bg-blue-500 rounded-full"></div>
-                                        <h3 class="text-lg font-bold text-slate-800">{{ res.name }}</h3>
+                                        <h3 class="text-lg font-bold">{{ res.name }}</h3>
                                     </div>
                                     
-                                    <div class="bg-slate-50/50 rounded-2xl p-6 space-y-3 border border-slate-50">
-                                        <div v-for="step in res.steps" :key="step.tier" class="step-row flex justify-between text-sm py-1 transition-colors">
-                                            <span class="text-slate-500">{{ step.tier }}</span>
-                                            <span class="font-medium text-slate-700">{{ step.calc }}</span>
+                                    <div class="bg-black/5 dark:bg-white/5 rounded-2xl p-6 space-y-3">
+                                        <div v-for="step in res.steps" :key="step.tier" class="flex justify-between text-sm py-1">
+                                            <span class="opacity-50">{{ step.tier }}</span>
+                                            <span class="font-medium opacity-80">{{ step.calc }}</span>
                                         </div>
-                                        <div class="flex justify-between pt-4 mt-2 border-t border-slate-100">
-                                            <span class="font-bold text-slate-900">项目小计</span>
-                                            <span class="font-bold text-blue-600 text-lg">{{ res.subtotal.toFixed(4) }} 万元</span>
+                                        <div class="flex justify-between pt-4 mt-2 border-t border-black/5 dark:border-white/5">
+                                            <span class="font-bold opacity-90">项目小计</span>
+                                            <span class="font-bold text-blue-500 text-lg">{{ res.subtotal.toFixed(4) }} 万元</span>
                                         </div>
                                     </div>
                                 </div>
@@ -272,12 +299,12 @@
                                 <div class="absolute inset-0 bg-blue-600 rounded-[32px] blur-2xl opacity-[0.03]"></div>
                                 <div class="relative summary-card rounded-[32px] p-8 text-white">
                                     <div class="space-y-4">
-                                        <div class="flex justify-between text-slate-400 text-sm font-medium">
+                                        <div class="flex justify-between opacity-50 text-sm font-medium">
                                             <span>各项费用合计</span>
                                             <span>{{ totalBase.toFixed(4) }} 万元</span>
                                         </div>
                                         
-                                        <div v-if="adjustmentRatio !== 1" class="flex justify-between text-slate-400 text-sm font-medium">
+                                        <div v-if="adjustmentRatio !== 1" class="flex justify-between opacity-50 text-sm font-medium">
                                             <span>市场竞争/难度系数</span>
                                             <span>× {{ adjustmentRatio }}</span>
                                         </div>
@@ -287,19 +314,19 @@
                                             <span>按 {{ applicableMinLimit }} 万元计</span>
                                         </div>
 
-                                        <div v-if="discount !== 100" class="flex justify-between text-slate-400 text-sm font-medium">
+                                        <div v-if="discount !== 100" class="flex justify-between opacity-50 text-sm font-medium">
                                             <span>优惠折扣 ({{ discount }}%)</span>
                                             <span>× {{ (discount/100).toFixed(2) }}</span>
                                         </div>
 
                                         <div class="pt-6 mt-6 border-t border-white/10 flex justify-between items-end">
                                             <div>
-                                                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">最终咨询费用总计</p>
-                                                <p class="text-sm text-slate-400">Total Consultation Fee</p>
+                                                <p class="text-xs font-bold opacity-40 uppercase tracking-widest mb-1">最终咨询费用总计</p>
+                                                <p class="text-sm opacity-30">Total Consultation Fee</p>
                                             </div>
                                             <div class="text-right">
                                                 <span class="text-4xl font-bold text-white">{{ finalTotal.toFixed(4) }}</span>
-                                                <span class="ml-2 text-lg font-medium text-slate-400">万元</span>
+                                                <span class="ml-2 text-lg font-medium opacity-40">万元</span>
                                             </div>
                                         </div>
                                     </div>
@@ -309,8 +336,8 @@
                     </div>
 
                     <!-- Report Footer -->
-                    <div class="p-8 bg-slate-50/50 border-t border-slate-100">
-                        <div class="flex items-start gap-3 text-xs text-slate-400 leading-relaxed">
+                    <div class="p-8 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5">
+                        <div class="flex items-start gap-3 text-xs opacity-40 leading-relaxed">
                             <i class="fas fa-info-circle mt-0.5"></i>
                             <p>本计算器严格遵循《北京市建设工程造价行业咨询服务费用计价参考》(京标价协(2022) 71号)标准。计算结果仅供商务洽谈参考，最终以合同签订为准。</p>
                         </div>
@@ -331,6 +358,22 @@
 
         createApp({
             setup() {
+                const theme = ref(localStorage.getItem('theme') || 'system');
+                const setTheme = (t) => {
+                    theme.value = t;
+                    localStorage.setItem('theme', t);
+                    applyTheme();
+                };
+                const applyTheme = () => {
+                    const root = document.documentElement;
+                    if (theme.value === 'system') {
+                        root.removeAttribute('data-theme');
+                    } else {
+                        root.setAttribute('data-theme', theme.value);
+                    }
+                };
+                applyTheme();
+
                 const costAmount = ref(1000);
                 const selectedServices = ref(['6']); // Default to List Preparation
                 const adjustmentRatio = ref(1.0);
@@ -622,7 +665,9 @@
                     copyReport,
                     copyBtnText,
                     reportText,
-                    resetAll
+                    resetAll,
+                    theme,
+                    setTheme
                 };
             }
         }).mount('#app');
