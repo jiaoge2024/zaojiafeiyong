@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>造价咨询收费计算器 - 北京 2022-71号标准</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --apple-blue: #007AFF;
+            --bg-color: #F5F5F7;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text-main: #1D1D1F;
+            --text-secondary: #86868B;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --item-bg: #FFFFFF;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #000000;
+            --card-bg: rgba(28, 28, 30, 0.8);
+            --text-main: #FFFFFF;
+            --text-secondary: #A1A1A6;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --item-bg: rgba(44, 44, 46, 0.8);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg-color: #000000;
+                --card-bg: rgba(28, 28, 30, 0.8);
+                --text-main: #FFFFFF;
+                --text-secondary: #A1A1A6;
+                --border-color: rgba(255, 255, 255, 0.15);
+                --input-bg: rgba(255, 255, 255, 0.1);
+                --item-bg: rgba(44, 44, 46, 0.8);
+            }
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .apple-input {
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 14px;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .apple-input:focus {
+            background: var(--card-bg);
+            border-color: var(--apple-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+        }
+
+        .service-tag {
+            background: var(--item-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .service-tag.active {
+            background: var(--apple-blue);
+            color: white !important;
+            border-color: transparent;
+        }
+
+        .theme-switch {
+            background: var(--input-bg);
+            border-radius: 20px;
+            padding: 4px;
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .theme-btn {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .theme-btn.active {
+            background: var(--apple-blue);
+            color: white;
+        }
+
+        .summary-card {
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="min-h-screen py-6 md:py-12">
+    <div id="app" class="container mx-auto px-4 md:px-6 max-w-5xl">
+        <!-- Header -->
+        <header class="mb-8 md:mb-12 flex flex-col items-center">
+            <div class="theme-switch mb-6 md:mb-8">
+                <button @click="setTheme('light')" :class="['theme-btn', theme === 'light' ? 'active' : '']">
+                    <i class="fas fa-sun mr-1"></i> 明亮
+                </button>
+                <button @click="setTheme('dark')" :class="['theme-btn', theme === 'dark' ? 'active' : '']">
+                    <i class="fas fa-moon mr-1"></i> 暗黑
+                </button>
+                <button @click="setTheme('system')" :class="['theme-btn', theme === 'system' ? 'active' : '']">
+                    <i class="fas fa-desktop mr-1"></i> 跟随系统
+                </button>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3 text-center">造价咨询收费计算器</h1>
+            <p class="text-base md:text-lg opacity-60 font-medium">京标价协 (2022) 71号标准</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
+            <!-- Left Side: Inputs -->
+            <div class="md:col-span-5 lg:col-span-5 space-y-6 md:space-y-8">
+                <section class="glass-card p-5 md:p-8">
+                    <h2 class="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="fas fa-sliders-h text-blue-500 text-sm"></i> 项目参数
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Construction Cost -->
+                        <div>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">工程造价</label>
+                            <div class="relative">
+                                <input type="number" v-model.number="costAmount" 
+                                    class="apple-input w-full pl-5 pr-16 py-4 text-lg md:text-xl font-semibold outline-none"
+                                    placeholder="0.00">
+                                <span class="absolute right-5 top-1/2 -translate-y-1/2 opacity-40 font-medium">万元</span>
+                            </div>
+                        </div>
+
+                        <!-- Services Selection -->
+                        <div>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-3 ml-1">咨询项目</label>
+                            <div class="grid grid-cols-1 gap-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                                <div v-for="item in serviceOptions" :key="item.id" 
+                                    @click="toggleService(item.id)"
+                                    :class="['service-tag flex items-center justify-between p-3 md:p-4 rounded-2xl border cursor-pointer', 
+                                            selectedServices.includes(item.id) ? 'active border-transparent' : 'hover:border-blue-500/50']">
+                                    <span class="text-sm font-medium">{{ item.name }}</span>
+                                    <i v-if="selectedServices.includes(item.id)" class="fas fa-check-circle text-white"></i>
+                                    <i v-else class="far fa-circle opacity-20"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Adjustments -->
+                <section class="glass-card p-5 md:p-8">
+                    <h2 class="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="fas fa-percentage text-blue-500 text-sm"></i> 调整系数
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4 md:gap-6">
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">调整系数</label>
+                                <input type="number" v-model.number="adjustmentRatio" step="0.1"
+                                    class="apple-input w-full px-4 py-3 font-medium outline-none text-sm md:text-base">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">折扣率 (%)</label>
+                                <input type="number" v-model.number="discount" 
+                                    class="apple-input w-full px-4 py-3 font-medium outline-none text-sm md:text-base"
+                                    placeholder="100">
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-transparent bg-black/5 dark:bg-white/5 cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <span class="text-sm font-medium opacity-80">审核类业务 (0.9)</span>
+                                </div>
+                                <input type="checkbox" v-model="isAudit" class="w-5 h-5 accent-blue-500">
+                            </label>
+
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-transparent bg-black/5 dark:bg-white/5 cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <span class="text-sm font-medium opacity-80">专项工程 (1.2)</span>
+                                </div>
+                                <input type="checkbox" v-model="isSpecial" class="w-5 h-5 accent-blue-500">
+                            </label>
+                        </div>
+
+                        <!-- Benefit Fee -->
+                        <div v-if="selectedServices.some(id => rateTable[id].hasBenefit)" 
+                            class="p-4 md:p-6 bg-orange-500/10 dark:bg-orange-500/20 rounded-2xl border border-orange-500/20 space-y-4">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <h3 class="text-sm font-bold text-orange-500">结算审核效益收费</h3>
+                                <div class="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-lg border border-orange-500/30">
+                                    <span class="text-[10px] md:text-xs font-bold text-orange-400">费率</span>
+                                    <input type="number" v-model.number="benefitRate" class="w-8 text-sm font-bold text-orange-500 outline-none bg-transparent text-center">
+                                    <span class="text-[10px] md:text-xs font-bold text-orange-400">%</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-orange-400 uppercase ml-1">核减额 (万)</label>
+                                    <input type="number" v-model.number="reducedAmount" 
+                                        class="w-full px-4 py-3 bg-white/10 border border-orange-500/20 rounded-xl outline-none text-sm font-semibold text-orange-500 focus:border-orange-500 transition-colors"
+                                        placeholder="0.00">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-bold text-orange-400 uppercase ml-1">核增额 (万)</label>
+                                    <input type="number" v-model.number="addedAmount" 
+                                        class="w-full px-4 py-3 bg-white/10 border border-orange-500/20 rounded-xl outline-none text-sm font-semibold text-orange-500 focus:border-orange-500 transition-colors"
+                                        placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button @click="resetAll" class="w-full py-4 text-sm font-medium opacity-40 hover:opacity-100 transition-opacity">
+                            <i class="fas fa-redo-alt mr-2 text-xs"></i> 重置所有参数
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Side: Output -->
+            <div class="md:col-span-7 lg:col-span-7">
+                <section class="glass-card overflow-hidden flex flex-col h-full">
+                    <!-- Results Header -->
+                    <div class="p-5 md:p-8 border-b border-black/5 dark:border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-semibold">收费计算报告</h2>
+                            <p class="text-xs md:text-sm opacity-40 mt-1">根据最新计价标准实时生成</p>
+                        </div>
+                        <button @click="copyReport" class="w-full sm:w-auto btn-primary px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-medium text-sm shadow-lg">
+                            <i class="far fa-copy"></i>
+                            {{ copyBtnText }}
+                        </button>
+                    </div>
+
+                    <!-- Results Content -->
+                    <div class="p-5 md:p-8 flex-grow">
+                        <div v-if="selectedServices.length === 0" class="flex flex-col items-center justify-center py-12 md:py-20 opacity-20">
+                            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mb-6">
+                                <i class="fas fa-receipt text-2xl md:text-3xl"></i>
+                            </div>
+                            <p class="text-base md:text-lg font-medium text-center">请选择咨询项目以开始计算</p>
+                        </div>
+
+                        <div v-else class="space-y-8 md:space-y-10">
+                            <!-- Items Breakdown -->
+                            <div class="space-y-6 md:space-y-8">
+                                <div v-for="res in calculationResults" :key="res.id" class="group">
+                                    <div class="flex items-center gap-3 mb-3 md:mb-4">
+                                        <div class="w-1.5 h-5 md:h-6 bg-blue-500 rounded-full"></div>
+                                        <h3 class="text-base md:text-lg font-bold">{{ res.name }}</h3>
+                                    </div>
+                                    
+                                    <div class="bg-black/5 dark:bg-white/5 rounded-2xl p-4 md:p-6 space-y-3">
+                                        <div v-for="step in res.steps" :key="step.tier" class="flex justify-between text-xs md:text-sm py-1">
+                                            <span class="opacity-50 text-left pr-2">{{ step.tier }}</span>
+                                            <span class="font-medium opacity-80 text-right">{{ step.calc }}</span>
+                                        </div>
+                                        <div class="flex justify-between pt-4 mt-2 border-t border-black/5 dark:border-white/5 items-center">
+                                            <span class="font-bold opacity-90 text-sm md:text-base">项目小计</span>
+                                            <span class="font-bold text-blue-500 text-base md:text-lg">{{ res.subtotal.toFixed(4) }} 万元</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Final Summary Card -->
+                            <div class="relative mt-8 md:mt-12">
+                                <div class="absolute inset-0 bg-blue-600 rounded-[24px] md:rounded-[32px] blur-2xl opacity-[0.03]"></div>
+                                <div class="relative summary-card rounded-[24px] md:rounded-[32px] p-6 md:p-8 text-white">
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between opacity-50 text-xs md:text-sm font-medium">
+                                            <span>各项费用合计</span>
+                                            <span>{{ totalBase.toFixed(4) }} 万元</span>
+                                        </div>
+                                        
+                                        <div v-if="adjustmentRatio !== 1" class="flex justify-between opacity-50 text-xs md:text-sm font-medium">
+                                            <span>市场竞争/难度系数</span>
+                                            <span>× {{ adjustmentRatio }}</span>
+                                        </div>
+
+                                        <div v-if="isMinLimitTriggered" class="flex justify-between text-orange-400 text-xs md:text-sm font-bold">
+                                            <span>保底限额调整</span>
+                                            <span>按 {{ applicableMinLimit }} 万元计</span>
+                                        </div>
+
+                                        <div v-if="discount !== 100" class="flex justify-between opacity-50 text-xs md:text-sm font-medium">
+                                            <span>优惠折扣 ({{ discount }}%)</span>
+                                            <span>× {{ (discount/100).toFixed(2) }}</span>
+                                        </div>
+
+                                        <div class="pt-5 md:pt-6 mt-5 md:mt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                                            <div>
+                                                <p class="text-[10px] md:text-xs font-bold opacity-40 uppercase tracking-widest mb-1">最终咨询费用总计</p>
+                                                <p class="text-xs opacity-30">Total Consultation Fee</p>
+                                            </div>
+                                            <div class="text-right w-full sm:w-auto">
+                                                <span class="text-3xl md:text-4xl font-bold text-white">{{ finalTotal.toFixed(4) }}</span>
+                                                <span class="ml-2 text-base md:text-lg font-medium opacity-40">万元</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Footer -->
+                    <div class="p-5 md:p-8 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5">
+                        <div class="flex items-start gap-3 text-[10px] md:text-xs opacity-40 leading-relaxed">
+                            <i class="fas fa-info-circle mt-0.5"></i>
+                            <p>本计算器严格遵循《北京市建设工程造价行业咨询服务费用计价参考》(京标价协(2022) 71号)标准。计算结果仅供商务洽谈参考，最终以合同签订为准。</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <textarea id="report-text" class="hidden" v-model="reportText"></textarea>
+            </div>
+        </div>
+        
+        <footer class="mt-16 text-center">
+            <p class="text-slate-400 text-xs font-medium tracking-wide uppercase">© 2025 造价咨询收费助手 · 精准 · 专业 · 合规</p>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, watch } = Vue;
+
+        createApp({
+            setup() {
+                const theme = ref(localStorage.getItem('theme') || 'system');
+                const setTheme = (t) => {
+                    theme.value = t;
+                    localStorage.setItem('theme', t);
+                    applyTheme();
+                };
+                const applyTheme = () => {
+                    const root = document.documentElement;
+                    if (theme.value === 'system') {
+                        root.removeAttribute('data-theme');
+                    } else {
+                        root.setAttribute('data-theme', theme.value);
+                    }
+                };
+                applyTheme();
+
+                const costAmount = ref(1000);
+                const selectedServices = ref(['6']); // Default to List Preparation
+                const adjustmentRatio = ref(1.0);
+                const discount = ref(100);
+                const reducedAmount = ref('');
+                const addedAmount = ref(''); // Added for rule 1
+                const benefitRate = ref(5);
+                const isAudit = ref(false); // Rule 3
+                const isSpecial = ref(false); // Rule 4
+                const copyBtnText = ref('复制报告');
+
+                // 费率表数据 - 根据最新《计算标准》
+                const rateTable = {
+                    '1': { name: '投资预算评审', rates: [3.5, 3, 2.5, 2.2, 2, 1.6] },
+                    '2': { name: '投资估算编制', rates: [2.5, 1.5, 1, 0.8, 0.7, 0.6], canAudit: true },
+                    '3': { name: '工程概算编制', rates: [2.8, 2.5, 2, 1.8, 1.5, 1.3], canAudit: true },
+                    '4': { name: '设计经济分析', rates: [1.8, 1.5, 1.4, 1.2, 1, 0.8] },
+                    '5': { name: '目标成本编制', rates: [2.5, 2, 1.8, 1.5, 1.3, 1.2], canAudit: true },
+                    '6': { name: '工程量清单编制', rates: [3.3, 2.8, 2.5, 2.3, 2, 1.8], canAudit: true },
+                    '7': { name: '最高投标限价编制', rates: [3, 2.5, 2.2, 2, 1.7, 1.5], canAudit: true },
+                    '8': { name: '工程清标', rates: [2, 1.8, 1.5, 1, 0.8, 0.6] },
+                    '9': { name: '重计量基本费用', rates: [4.5, 4, 3.5, 3, 2.5, 2] },
+                    '11': { name: '施工过程造价管理', rates: [9.5, 8.5, 8, 7.5, 6, 5] },
+                    '13': { name: '工程结算审核(一)', rates: [5, 4.5, 4, 3.5, 3, 2.5], hasBenefit: true },
+                    '14': { name: '工程结算审核(二)', rates: [8, 7, 6, 5, 4, 3], hasBenefit: true },
+                    '15': { name: '过程管理审计', rates: [6.3, 5.6, 4.5, 3.8, 3.5, 2.8] },
+                    '16': { name: '竣工决算编制', rates: [2, 1.8, 1.5, 1.3, 1.2, 1], canAudit: true },
+                    '17': { name: '建设项目后评价', rates: [1.8, 1.5, 1.2, 1, 0.8, 0.6] },
+                    '18': { name: '工程造价纠纷鉴证', rates: [13, 11, 9, 6.5, 5.5, 4.5], isPercent: true, minLimit: 2 } // 2万元
+                };
+
+                const serviceOptions = Object.keys(rateTable).map(id => ({
+                    id,
+                    name: rateTable[id].name
+                }));
+
+                const tiers = [0, 200, 500, 2000, 10000, 50000]; // 万元
+
+                const toggleService = (id) => {
+                    const index = selectedServices.value.indexOf(id);
+                    if (index > -1) {
+                        selectedServices.value.splice(index, 1);
+                    } else {
+                        selectedServices.value.push(id);
+                    }
+                };
+
+                const calculationResults = computed(() => {
+                    if (!costAmount.value || selectedServices.value.length === 0) return [];
+
+                    return selectedServices.value.map(id => {
+                        const service = rateTable[id];
+                        const resultSteps = [];
+                        let remaining = costAmount.value;
+                        let subtotal = 0;
+                        const divisor = service.isPercent ? 100 : 1000;
+                        const unit = service.isPercent ? '%' : '‰';
+
+                        for (let i = 0; i < tiers.length; i++) {
+                            const lower = tiers[i];
+                            const upper = tiers[i + 1] || Infinity;
+                            const rate = service.rates[i];
+
+                            if (remaining > lower) {
+                                const amountInTier = Math.min(remaining, upper) - lower;
+                                const tierFee = (amountInTier * rate) / divisor;
+                                subtotal += tierFee;
+
+                                resultSteps.push({
+                                    tier: i === tiers.length - 1 ? `> ${lower}万` : `${lower}-${upper}万`,
+                                    calc: `${amountInTier.toFixed(2)} × ${rate}${unit} = ${tierFee.toFixed(4)} 万元`
+                                });
+                            }
+                            if (remaining <= upper) break;
+                        }
+
+                        // Rule 3: Audit coefficient 0.9
+                        if (isAudit.value && service.canAudit) {
+                            const auditDiscount = subtotal * 0.1;
+                            subtotal *= 0.9;
+                            resultSteps.push({
+                                tier: '审核类业务系数',
+                                calc: `编制费小计 × 0.9 = ${subtotal.toFixed(4)} 万元 (调减 ${auditDiscount.toFixed(4)}万)`
+                            });
+                        }
+
+                        // Rule 4: Special project coefficient 1.2
+                        if (isSpecial.value) {
+                            const specialIncrease = subtotal * 0.2;
+                            subtotal *= 1.2;
+                            resultSteps.push({
+                                tier: '专项工程系数',
+                                calc: `当前小计 × 1.2 = ${subtotal.toFixed(4)} 万元 (调增 ${specialIncrease.toFixed(4)}万)`
+                            });
+                        }
+
+                        // Rule 1: Settlement Review (Benefit Fee)
+                        if (service.hasBenefit && (reducedAmount.value || addedAmount.value) && benefitRate.value) {
+                            const totalAdjust = (Number(reducedAmount.value) || 0) + (Number(addedAmount.value) || 0);
+                            const bFee = totalAdjust * (benefitRate.value / 100);
+                            subtotal += bFee;
+                            resultSteps.push({
+                                tier: '效益收费',
+                                calc: `(审减 ${reducedAmount.value || 0} + 审增 ${addedAmount.value || 0}) × ${benefitRate.value}% = ${bFee.toFixed(4)} 万元`
+                            });
+                        }
+
+                        return {
+                            id,
+                            name: service.name,
+                            steps: resultSteps,
+                            subtotal: subtotal
+                        };
+                    });
+                });
+
+                const totalBase = computed(() => {
+                    return calculationResults.value.reduce((acc, cur) => acc + cur.subtotal, 0);
+                });
+
+                // 新增：计算适用的保底限额
+                const applicableMinLimit = computed(() => {
+                    // 如果选择了纠纷鉴证(18)，保底为2万；否则为0.3万
+                    return selectedServices.value.includes('18') ? 2.0 : 0.3;
+                });
+
+                // 新增：调整系数后的金额（用于与保底限额比较）
+                const amountAfterAdjustment = computed(() => {
+                    return totalBase.value * adjustmentRatio.value;
+                });
+
+                // 新增：是否触发保底
+                const isMinLimitTriggered = computed(() => {
+                    return amountAfterAdjustment.value > 0 && amountAfterAdjustment.value < applicableMinLimit.value;
+                });
+
+                const finalTotal = computed(() => {
+                    const base = isMinLimitTriggered.value ? applicableMinLimit.value : amountAfterAdjustment.value;
+                    return base * (discount.value / 100);
+                });
+
+                const reportText = computed(() => {
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+                    let text = `================================================\n`;
+                    text += `      建 设 工 程 造 价 咨 询 收 费 计 算 报 告      \n`;
+                    text += `================================================\n\n`;
+                    
+                    text += `【项目基本信息】\n`;
+                    text += `------------------------------------------------\n`;
+                    text += `计价基准：京标价协 (2022) 71号《北京市建设工程造价行业咨询服务费用计价参考》\n`;
+                    text += `工程造价：${costAmount.value.toLocaleString()} 万元\n`;
+                    text += `报告日期：${dateStr} ${timeStr}\n`;
+                    
+                    let types = [];
+                    if (isAudit.value) types.push("审核类业务 (应用0.9编制费系数)");
+                    if (isSpecial.value) types.push("专项工程 (装饰/安装/修缮 1.2系数)");
+                    if (types.length > 0) {
+                        text += `业务特征：${types.join('、')}\n`;
+                    }
+                    text += `------------------------------------------------\n\n`;
+                    
+                    text += `【咨询费用明细】\n`;
+                    text += `------------------------------------------------\n`;
+                    
+                    calculationResults.value.forEach((res, idx) => {
+                        text += `${idx + 1}. ${res.name}\n`;
+                        res.steps.forEach(s => {
+                            // Align the text for professional look
+                            const tierText = s.tier.padEnd(15);
+                            text += `   · ${tierText} ${s.calc}\n`;
+                        });
+                        text += `   项目收费小计：${res.subtotal.toFixed(4)} 万元\n`;
+                        if (idx < calculationResults.value.length - 1) text += `\n`;
+                    });
+                    text += `------------------------------------------------\n\n`;
+
+                    text += `【收费汇总与调整】\n`;
+                    text += `------------------------------------------------\n`;
+                    text += `1. 各项咨询费合计：  ${totalBase.value.toFixed(4)} 万元\n`;
+                    
+                    if (adjustmentRatio.value !== 1) {
+                        text += `2. 市场/难度调整系数：× ${adjustmentRatio.value}\n`;
+                    }
+                    
+                    if (isMinLimitTriggered.value) {
+                        text += `3. 保底限额调整：    计算值 ${amountAfterAdjustment.value.toFixed(4)}万 < 保底值 ${applicableMinLimit.value}万\n`;
+                        text += `                     依据标准按 ${applicableMinLimit.value} 万元计取\n`;
+                    }
+                    
+                    if (discount.value !== 100) {
+                        const discountIdx = isMinLimitTriggered.value ? 4 : (adjustmentRatio.value !== 1 ? 3 : 2);
+                        text += `${discountIdx}. 商务优惠折扣：    ${discount.value}% (折减系数 ${(discount.value / 100).toFixed(2)})\n`;
+                    }
+                    text += `------------------------------------------------\n\n`;
+
+                    text += `【最终收费结论】\n`;
+                    text += `------------------------------------------------\n`;
+                    text += `应收咨询费用总计：   CNY ${finalTotal.value.toFixed(4)} 万元\n`;
+                    text += `（大写：${amountToChinese(finalTotal.value * 10000)}）\n`;
+                    text += `------------------------------------------------\n\n`;
+
+                    text += `【特别说明】\n`;
+                    text += `1. 本报告计算依据为京标价协(2022)71号文，费率已按最新行业标准更新。\n`;
+                    text += `2. 计算结果仅作为商务洽谈参考，具体收费标准应以双方最终签订的咨询服务合同为准。\n`;
+                    text += `3. 报告由“造价咨询收费助手”生成，作者【焦哥】，欢迎交流咨询。\n\n`;
+                    text += `================ END OF REPORT ================\n`;
+                    
+                    return text;
+                });
+
+                // Helper to convert number to Chinese uppercase (simplified version)
+                function amountToChinese(n) {
+                    if (n === 0) return "零元整";
+                    const fraction = ['角', '分'];
+                    const digit = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+                    const unit = [
+                        ['元', '万', '亿'],
+                        ['', '拾', '佰', '仟']
+                    ];
+                    let s = '';
+                    for (let i = 0; i < fraction.length; i++) {
+                        s += (digit[Math.floor(n * 10 * Math.pow(10, i)) % 10] + fraction[i]).replace(/零./, '');
+                    }
+                    s = s || '整';
+                    n = Math.floor(n);
+                    for (let i = 0; i < unit[0].length && n > 0; i++) {
+                        let p = '';
+                        for (let j = 0; j < unit[1].length && n > 0; j++) {
+                            p = digit[n % 10] + unit[1][j] + p;
+                            n = Math.floor(n / 10);
+                        }
+                        s = p.replace(/(零.)*零$/, '').replace(/^$/, '零') + unit[0][i] + s;
+                    }
+                    return s.replace(/(零.)*零元/, '元')
+                            .replace(/(零.)+/g, '零')
+                            .replace(/^整$/, '零元整');
+                }
+
+                const resetAll = () => {
+                    costAmount.value = 1000;
+                    selectedServices.value = ['6'];
+                    adjustmentRatio.value = 1.0;
+                    discount.value = 100;
+                    reducedAmount.value = '';
+                    addedAmount.value = '';
+                    benefitRate.value = 5;
+                    isAudit.value = false;
+                    isSpecial.value = false;
+                };
+
+                const copyReport = () => {
+                    const textarea = document.getElementById('report-text');
+                    textarea.classList.remove('hidden');
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        copyBtnText.value = '已复制!';
+                        setTimeout(() => {
+                            copyBtnText.value = '复制报告';
+                        }, 2000);
+                    } catch (err) {
+                        alert('复制失败，请手动选择复制');
+                    }
+                    textarea.classList.add('hidden');
+                };
+
+                return {
+                    costAmount,
+                    selectedServices,
+                    adjustmentRatio,
+                    discount,
+                    reducedAmount,
+                    addedAmount,
+                    benefitRate,
+                    isAudit,
+                    isSpecial,
+                    applicableMinLimit,
+                    amountAfterAdjustment,
+                    isMinLimitTriggered,
+                    rateTable,
+                    serviceOptions,
+                    calculationResults,
+                    totalBase,
+                    finalTotal,
+                    toggleService,
+                    copyReport,
+                    copyBtnText,
+                    reportText,
+                    resetAll,
+                    theme,
+                    setTheme
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
