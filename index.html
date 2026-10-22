@@ -112,6 +112,49 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* 模块切换Tab样式（与主题切换风格一致） */
+        .mode-switch {
+            background: var(--input-bg);
+            border-radius: 24px;
+            padding: 5px;
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .mode-btn.active {
+            background: var(--apple-blue);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        /* 浮动快捷档按钮 */
+        .float-chip {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--item-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .float-chip.active {
+            background: var(--apple-blue);
+            color: white;
+            border-color: transparent;
+        }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -130,15 +173,26 @@
                     <i class="fas fa-desktop mr-1"></i> 跟随系统
                 </button>
             </div>
+            <div class="mode-switch mb-6 md:mb-8">
+                <button @click="setMode('cost')" :class="['mode-btn', mode === 'cost' ? 'active' : '']">
+                    <i class="fas fa-calculator mr-1"></i> 造价咨询收费
+                </button>
+                <button @click="setMode('tender')" :class="['mode-btn', mode === 'tender' ? 'active' : '']">
+                    <i class="fas fa-gavel mr-1"></i> 招标代理服务费
+                </button>
+            </div>
             <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3 text-center">造价咨询收费计算器</h1>
             <p class="text-base md:text-lg opacity-60 font-medium">
-                <a href="北京市建设工程造价行业咨询服务费用计价-京标价协(2022) 71号.pdf" download class="hover:text-blue-500 transition-colors">
+                <a v-if="mode === 'cost'" href="北京市建设工程造价行业咨询服务费用计价-京标价协(2022) 71号.pdf" download class="hover:text-blue-500 transition-colors">
                     京标价协 (2022) 71号标准
+                </a>
+                <a v-else href="收费标准全文 - 招标代理服务费.pdf" download class="hover:text-blue-500 transition-colors">
+                    计价格 (2002) 1980号 · 发改价格 (2011) 534号标准
                 </a>
             </p>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
+        <div v-if="mode === 'cost'" class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
             <!-- Left Side: Inputs -->
             <div class="md:col-span-5 lg:col-span-5 space-y-6 md:space-y-8">
                 <section class="glass-card p-5 md:p-8">
@@ -347,11 +401,173 @@
                         </div>
                     </div>
                 </section>
-                
-                <textarea id="report-text" class="hidden" v-model="reportText"></textarea>
             </div>
         </div>
-        
+
+        <!-- 招标代理服务费模块 -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10">
+            <!-- Left Side: Inputs -->
+            <div class="md:col-span-5 lg:col-span-5 space-y-6 md:space-y-8">
+                <section class="glass-card p-5 md:p-8">
+                    <h2 class="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="fas fa-gavel text-blue-500 text-sm"></i> 招标代理参数
+                    </h2>
+
+                    <div class="space-y-6">
+                        <!-- 中标金额 -->
+                        <div>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-2 ml-1">中标金额</label>
+                            <div class="relative">
+                                <input type="number" v-model.number="tenderAmount"
+                                    class="apple-input w-full pl-5 pr-16 py-4 text-lg md:text-xl font-semibold outline-none"
+                                    placeholder="0.00">
+                                <span class="absolute right-5 top-1/2 -translate-y-1/2 opacity-40 font-medium">万元</span>
+                            </div>
+                        </div>
+
+                        <!-- 招标类型 -->
+                        <div>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-3 ml-1">招标类型</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div v-for="t in tenderTypeOptions" :key="t.id"
+                                    @click="tenderType = t.id"
+                                    :class="['service-tag flex flex-col items-center justify-center gap-1 p-3 md:p-4 rounded-2xl border cursor-pointer',
+                                            tenderType === t.id ? 'active border-transparent' : 'hover:border-blue-500/50']">
+                                    <i :class="[t.icon, 'text-base']"></i>
+                                    <span class="text-xs md:text-sm font-medium">{{ t.name }}</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] opacity-40 mt-2 ml-1 leading-relaxed">
+                                <i class="fas fa-info-circle mr-1"></i>{{ tenderTypeHint }}
+                            </p>
+                        </div>
+
+                        <!-- 浮动系数 -->
+                        <div>
+                            <label class="block text-xs font-bold opacity-40 uppercase tracking-wider mb-3 ml-1">浮动系数</label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button v-for="f in floatPresets" :key="f.value" @click="tenderFloat = f.value"
+                                    :class="['float-chip', tenderFloat === f.value ? 'active' : '']">{{ f.label }}</button>
+                            </div>
+                            <div class="relative">
+                                <input type="number" v-model.number="tenderFloat" step="1"
+                                    class="apple-input w-full pl-5 pr-16 py-3 font-medium outline-none text-sm md:text-base"
+                                    placeholder="0">
+                                <span class="absolute right-5 top-1/2 -translate-y-1/2 opacity-40 font-medium text-sm">%</span>
+                            </div>
+                            <p class="text-[10px] opacity-40 mt-2 ml-1">可手动输入任意浮动值，负数为下浮、正数为上浮，输入后自动计算</p>
+                        </div>
+
+                        <!-- 一次招标限额 -->
+                        <label class="flex items-center justify-between p-4 rounded-2xl border border-transparent bg-black/5 dark:bg-white/5 cursor-pointer group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                    <i class="fas fa-flag-checkered"></i>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium opacity-80 block">一次招标 (适用收费上限)</span>
+                                    <span class="text-[10px] opacity-40">货物 {{ tenderCaps.goods }}万 / 服务 {{ tenderCaps.service }}万 / 工程 {{ tenderCaps.works }}万</span>
+                                </div>
+                            </div>
+                            <input type="checkbox" v-model="isOnceTender" class="w-5 h-5 accent-blue-500">
+                        </label>
+
+                        <button @click="resetTender" class="w-full py-4 text-sm font-medium opacity-40 hover:opacity-100 transition-opacity">
+                            <i class="fas fa-redo-alt mr-2 text-xs"></i> 重置所有参数
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Side: Output -->
+            <div class="md:col-span-7 lg:col-span-7">
+                <section class="glass-card overflow-hidden flex flex-col h-full">
+                    <!-- Results Header -->
+                    <div class="p-5 md:p-8 border-b border-black/5 dark:border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 class="text-xl md:text-2xl font-semibold">招标代理服务费计算报告</h2>
+                            <p class="text-xs md:text-sm opacity-40 mt-1">差额定率累进法 · 实时生成</p>
+                        </div>
+                        <button @click="copyReport" class="w-full sm:w-auto btn-primary px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-medium text-sm shadow-lg">
+                            <i class="far fa-copy"></i>
+                            {{ copyBtnText }}
+                        </button>
+                    </div>
+
+                    <!-- Results Content -->
+                    <div class="p-5 md:p-8 flex-grow">
+                        <div v-if="!tenderAmount || tenderAmount <= 0" class="flex flex-col items-center justify-center py-12 md:py-20 opacity-20">
+                            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mb-6">
+                                <i class="fas fa-gavel text-2xl md:text-3xl"></i>
+                            </div>
+                            <p class="text-base md:text-lg font-medium text-center">请输入中标金额以开始计算</p>
+                        </div>
+
+                        <div v-else class="space-y-8 md:space-y-10">
+                            <!-- 计算明细 -->
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-1.5 h-5 md:h-6 bg-blue-500 rounded-full"></div>
+                                    <h3 class="text-base md:text-lg font-bold">差额定率累进计算明细</h3>
+                                </div>
+                                <div class="bg-black/5 dark:bg-white/5 rounded-2xl p-4 md:p-6 space-y-3">
+                                    <div v-for="(step, idx) in tenderResult.steps" :key="idx" class="flex justify-between text-xs md:text-sm py-1">
+                                        <span class="opacity-50 text-left pr-2">{{ step.tier }}</span>
+                                        <span class="font-medium opacity-80 text-right">{{ step.calc }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 汇总卡片 -->
+                            <div class="relative mt-8 md:mt-12">
+                                <div class="absolute inset-0 bg-blue-600 rounded-[24px] md:rounded-[32px] blur-2xl opacity-[0.03]"></div>
+                                <div class="relative summary-card rounded-[24px] md:rounded-[32px] p-6 md:p-8 text-white">
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between opacity-50 text-xs md:text-sm font-medium">
+                                            <span>{{ tenderTypeName }} · 基准价格</span>
+                                            <span>{{ tenderResult.baseFee.toFixed(4) }} 万元</span>
+                                        </div>
+
+                                        <div v-if="tenderFloat !== 0" class="flex justify-between opacity-50 text-xs md:text-sm font-medium">
+                                            <span>浮动系数</span>
+                                            <span>{{ tenderFloat > 0 ? '+' : '' }}{{ tenderFloat }}%</span>
+                                        </div>
+
+                                        <div v-if="tenderResult.capped" class="flex justify-between text-orange-400 text-xs md:text-sm font-bold">
+                                            <span>一次招标最高限额</span>
+                                            <span>按 {{ tenderCaps[tenderType] }} 万元封顶</span>
+                                        </div>
+
+                                        <div class="pt-5 md:pt-6 mt-5 md:mt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                                            <div>
+                                                <p class="text-[10px] md:text-xs font-bold opacity-40 uppercase tracking-widest mb-1">招标代理服务费总计</p>
+                                                <p class="text-xs opacity-30">Total Tender Agency Fee</p>
+                                            </div>
+                                            <div class="text-right w-full sm:w-auto">
+                                                <span class="text-3xl md:text-4xl font-bold text-white">{{ tenderResult.subtotal.toFixed(4) }}</span>
+                                                <span class="ml-2 text-base md:text-lg font-medium opacity-40">万元</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Footer -->
+                    <div class="p-5 md:p-8 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5">
+                        <div class="flex items-start gap-3 text-[10px] md:text-xs opacity-40 leading-relaxed">
+                            <i class="fas fa-info-circle mt-0.5"></i>
+                            <p>本计算器依据<a href="收费标准全文 - 招标代理服务费.pdf" download class="underline hover:text-blue-500 transition-colors">《招标代理服务收费管理暂行办法》(计价格[2002]1980号)</a>及<a href="收费标准全文 - 招标代理服务费.pdf" download class="underline hover:text-blue-500 transition-colors">《发改价格[2011]534号》</a>标准，采用差额定率累进法计算。计算结果仅供商务洽谈参考，最终以合同签订为准。</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- 复制报告用的隐藏文本域（两个模块共用，必须置于条件渲染之外） -->
+        <textarea id="report-text" class="hidden" v-model="reportText"></textarea>
+
         <footer class="mt-16 text-center">
             <p class="text-slate-400 text-xs font-medium tracking-wide uppercase">© 2025 造价咨询收费助手 · 精准 · 专业 · 合规</p>
         </footer>
@@ -388,6 +604,121 @@
                 const isAudit = ref(false); // Rule 3
                 const isSpecial = ref(false); // Rule 4
                 const copyBtnText = ref('复制报告');
+
+                // 模块切换：cost = 造价咨询收费，tender = 招标代理服务费
+                const mode = ref('cost');
+                const setMode = (m) => { mode.value = m; };
+
+                // ============ 招标代理服务费模块 ============
+                // 依据：计价格[2002]1980号《招标代理服务收费管理暂行办法》附件费率表
+                // 及发改价格[2011]534号文（5亿以上部分费率下调并设置收费上限）
+                const tenderAmount = ref(6000);   // 中标金额（万元）
+                const tenderType = ref('works');  // 招标类型：goods=货物 service=服务 works=工程
+                const tenderFloat = ref(0);       // 浮动系数（-20 ~ +20，单位%）
+                const isOnceTender = ref(true);   // 是否一次招标（适用最高收费限额）
+
+                // 招标类型选项与说明
+                const tenderTypeOptions = [
+                    { id: 'goods', name: '货物招标', icon: 'fas fa-boxes-stacked' },
+                    { id: 'service', name: '服务招标', icon: 'fas fa-handshake' },
+                    { id: 'works', name: '工程招标', icon: 'fas fa-building' }
+                ];
+                const tenderTypeHints = {
+                    goods: '原材料、产品、设备及固态/液态/气态物体和电力等货物及其附带服务',
+                    service: '工程勘察、设计、咨询、监理，矿业权、土地使用权出让转让和保险等服务',
+                    works: '土木工程、建筑工程、设备安装、管道线路敷设、装饰装修等建设及其附带服务'
+                };
+                const tenderTypeHint = computed(() => tenderTypeHints[tenderType.value]);
+                const tenderTypeName = computed(() =>
+                    tenderTypeOptions.find(t => t.id === tenderType.value)?.name || ''
+                );
+
+                // 一次招标最高收费限额（万元）—— 发改价格[2011]534号
+                const tenderCaps = { goods: 350, service: 300, works: 450 };
+
+                // 浮动系数快捷档位（%，实际场景均为下浮）
+                const floatPresets = [
+                    { label: '标准价', value: 0 },
+                    { label: '下浮5%', value: -5 },
+                    { label: '下浮10%', value: -10 },
+                    { label: '下浮20%', value: -20 },
+                    { label: '下浮30%', value: -30 },
+                    { label: '下浮50%', value: -50 }
+                ];
+
+                // 招标代理服务费分档费率表（%）
+                // 结构：{ upper: 本档上限（万元）, rates: { goods, service, works } }
+                // 5亿以下为1980号文基准费率；5亿以上按534号文调整
+                const tenderTiers = [
+                    { upper: 100,       rates: { goods: 1.5,  service: 1.5,  works: 1.0 } },
+                    { upper: 500,       rates: { goods: 1.1,  service: 0.8,   works: 0.7 } },
+                    { upper: 1000,      rates: { goods: 0.8,  service: 0.45,  works: 0.55 } },
+                    { upper: 5000,      rates: { goods: 0.5,  service: 0.25,  works: 0.35 } },
+                    { upper: 10000,     rates: { goods: 0.25, service: 0.1,   works: 0.2 } },
+                    { upper: 50000,     rates: { goods: 0.05, service: 0.05,  works: 0.05 } },   // 1亿-5亿
+                    { upper: 100000,    rates: { goods: 0.035, service: 0.035, works: 0.035 } },  // 5-10亿（534号文）
+                    { upper: 500000,    rates: { goods: 0.008, service: 0.008, works: 0.008 } },  // 10-50亿（534号文）
+                    { upper: 1000000,   rates: { goods: 0.006, service: 0.006, works: 0.006 } },  // 50-100亿（534号文）
+                    { upper: Infinity,  rates: { goods: 0.004, service: 0.004, works: 0.004 } }   // 100亿以上（534号文）
+                ];
+
+                // 招标代理服务费计算结果（差额定率累进法）
+                const tenderResult = computed(() => {
+                    const amount = Number(tenderAmount.value);
+                    if (!amount || amount <= 0) return { steps: [], baseFee: 0, subtotal: 0, capped: false };
+
+                    const steps = [];
+                    let subtotal = 0;      // 最终费用（万元）
+                    let lower = 0;         // 当前档位下限
+
+                    // 逐档累进计算
+                    for (const tier of tenderTiers) {
+                        if (amount > lower) {
+                            const amountInTier = Math.min(amount, tier.upper) - lower;
+                            const rate = tier.rates[tenderType.value];
+                            const tierFee = amountInTier * rate / 100;
+                            subtotal += tierFee;
+                            steps.push({
+                                tier: tier.upper === Infinity ? `> ${lower.toLocaleString()}万` : `${lower.toLocaleString()}-${tier.upper.toLocaleString()}万`,
+                                calc: `${amountInTier.toLocaleString()} × ${rate}% = ${tierFee.toFixed(4)} 万元`
+                            });
+                        }
+                        if (amount <= tier.upper) break;
+                        lower = tier.upper;
+                    }
+                    const baseFee = subtotal;
+
+                    // 应用浮动系数（上下浮动不超过20%，已在watch中约束）
+                    const floatVal = Number(tenderFloat.value) || 0;
+                    if (floatVal !== 0) {
+                        subtotal *= (1 + floatVal / 100);
+                        steps.push({
+                            tier: '浮动系数',
+                            calc: `基准价 ${baseFee.toFixed(4)}万 × ${(1 + floatVal / 100).toFixed(2)} = ${subtotal.toFixed(4)} 万元 (${floatVal > 0 ? '+' : ''}${floatVal}%)`
+                        });
+                    }
+
+                    // 一次招标最高收费限额封顶（发改价格[2011]534号）
+                    let capped = false;
+                    if (isOnceTender.value && subtotal > tenderCaps[tenderType.value]) {
+                        steps.push({
+                            tier: '最高限额',
+                            calc: `计算值 ${subtotal.toFixed(4)}万 > 限额 ${tenderCaps[tenderType.value]}万，按限额计取`
+                        });
+                        subtotal = tenderCaps[tenderType.value];
+                        capped = true;
+                    }
+
+                    return { steps, baseFee, subtotal, capped };
+                });
+
+                // 重置招标代理模块参数
+                const resetTender = () => {
+                    tenderAmount.value = '';
+                    tenderType.value = 'works';
+                    tenderFloat.value = 0;
+                    isOnceTender.value = true;
+                };
 
                 // 费率表数据 - 根据最新《计算标准》
                 const rateTable = {
@@ -520,6 +851,52 @@
                 });
 
                 const reportText = computed(() => {
+                    // 招标代理服务费模块：生成招标代理收费报告
+                    if (mode.value === 'tender') {
+                        const now = new Date();
+                        const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                        const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                        const amount = Number(tenderAmount.value) || 0;
+                        const floatVal = Number(tenderFloat.value) || 0;
+
+                        let text = `================================================\n`;
+                        text += `    招 标 代 理 服 务 费 计 算 报 告    \n`;
+                        text += `================================================\n\n`;
+
+                        text += `【项目基本信息】\n`;
+                        text += `------------------------------------------------\n`;
+                        text += `计价依据：计价格[2002]1980号《招标代理服务收费管理暂行办法》\n`;
+                        text += `          发改价格[2011]534号（5亿以上费率调整及收费上限）\n`;
+                        text += `招标类型：${tenderTypeName.value}\n`;
+                        text += `中标金额：${amount.toLocaleString()} 万元\n`;
+                        text += `计费方式：差额定率累进法\n`;
+                        if (floatVal !== 0) text += `浮动系数：${floatVal > 0 ? '+' : ''}${floatVal}%\n`;
+                        if (isOnceTender.value) text += `收费限额：一次招标最高限额 ${tenderCaps[tenderType.value]} 万元\n`;
+                        text += `报告日期：${dateStr} ${timeStr}\n`;
+                        text += `------------------------------------------------\n\n`;
+
+                        text += `【计算明细】\n`;
+                        text += `------------------------------------------------\n`;
+                        tenderResult.value.steps.forEach(s => {
+                            text += `   · ${s.tier.padEnd(15)} ${s.calc}\n`;
+                        });
+                        text += `------------------------------------------------\n\n`;
+
+                        text += `【收费结论】\n`;
+                        text += `------------------------------------------------\n`;
+                        text += `应收招标代理服务费：CNY ${tenderResult.value.subtotal.toFixed(4)} 万元\n`;
+                        text += `（大写：${amountToChinese(tenderResult.value.subtotal * 10000)}）\n`;
+                        text += `------------------------------------------------\n\n`;
+
+                        text += `【特别说明】\n`;
+                        text += `1. 按费率表计算的收费为招标代理服务全过程收费基准价格。\n`;
+                        text += `2. 计算结果仅作为商务洽谈参考，具体以双方签订的委托合同为准。\n`;
+                        text += `3. 报告由“造价咨询收费助手”生成，作者【焦哥】，欢迎交流咨询。\n\n`;
+                        text += `================ END OF REPORT ================\n`;
+                        return text;
+                    }
+
+                    // 造价咨询收费模块：生成造价咨询收费报告
                     const now = new Date();
                     const dateStr = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
                     const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
@@ -671,7 +1048,20 @@
                     reportText,
                     resetAll,
                     theme,
-                    setTheme
+                    setTheme,
+                    mode,
+                    setMode,
+                    tenderAmount,
+                    tenderType,
+                    tenderFloat,
+                    isOnceTender,
+                    tenderTypeOptions,
+                    tenderTypeHint,
+                    tenderTypeName,
+                    tenderCaps,
+                    floatPresets,
+                    tenderResult,
+                    resetTender
                 };
             }
         }).mount('#app');
